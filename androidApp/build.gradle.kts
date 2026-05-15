@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.commit451.datepickerspinner.sample"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.commit451.datepickerspinner.sample"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }

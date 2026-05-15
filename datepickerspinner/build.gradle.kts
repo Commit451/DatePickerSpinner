@@ -16,7 +16,7 @@ version = findProperty("VERSION_NAME") as String
 kotlin {
     android {
         namespace = "com.commit451.datepickerspinner"
-        compileSdk = 37
+        compileSdk = 36
         minSdk = 21
 
         compilerOptions {
