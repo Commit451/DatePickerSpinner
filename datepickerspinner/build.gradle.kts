@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    id("com.android.kotlin.multiplatform.library")
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.vanniktech.publish)
@@ -16,7 +16,7 @@ version = findProperty("VERSION_NAME") as String
 kotlin {
     android {
         namespace = "com.commit451.datepickerspinner"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 21
 
         compilerOptions {

@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    id("com.android.kotlin.multiplatform.library")
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlin.compose)
 }
@@ -11,7 +11,7 @@ plugins {
 kotlin {
     android {
         namespace = "com.commit451.datepickerspinner.sample.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 24
 
         compilerOptions {
