@@ -1,6 +1,10 @@
 package com.commit451.datepickerspinner
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -171,6 +175,14 @@ private fun WheelSpinner(
     val flingBehavior = rememberSnapFlingBehavior(listState)
     val scope = rememberCoroutineScope()
 
+    // On desktop a LazyColumn scrolls only with the mouse wheel; a mouse press-drag does nothing.
+    // This translates a vertical drag into a scroll so the wheel can be flicked with the mouse,
+    // matching touch behaviour. On touch the list's own scrolling claims the drag first, so this
+    // stays dormant there and does not double up.
+    val dragState = rememberDraggableState { delta ->
+        scope.launch { listState.scrollBy(-delta) }
+    }
+
     // List index nearest the viewport center. When snapped this is firstVisibleItemIndex + 1.
     val centeredListIndex by remember {
         derivedStateOf {
@@ -217,6 +229,16 @@ private fun WheelSpinner(
         flingBehavior = flingBehavior,
         modifier = modifier
             .height(itemHeight * VisibleItemCount)
+            .draggable(
+                state = dragState,
+                orientation = Orientation.Vertical,
+                // Hand the release velocity to the snap fling so the wheel settles on a value.
+                onDragStopped = { velocity ->
+                    listState.scroll {
+                        with(flingBehavior) { performFling(-velocity) }
+                    }
+                },
+            )
             // Frame the center row with a divider line above and below it.
             .drawWithContent {
                 drawContent()

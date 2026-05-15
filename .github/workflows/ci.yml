@@ -17,5 +17,5 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Build Android & JVM
-        run: ./gradlew :datepickerspinner:compileAndroidMain :datepickerspinner:compileKotlinJvm :composeApp:compileAndroidMain :composeApp:compileKotlinJvm :androidApp:compileDebugKotlin
+      - name: Build & test Android & JVM
+        run: ./gradlew :datepickerspinner:check :composeApp:compileAndroidMain :composeApp:compileKotlinJvm :androidApp:compileDebugKotlin

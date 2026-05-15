@@ -1,5 +1,9 @@
 package com.commit451.datepickerspinner.sample
 
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +40,7 @@ import com.commit451.datepickerspinner.DateField
 import com.commit451.datepickerspinner.DatePickerSpinner
 import com.commit451.datepickerspinner.DatePickerSpinnerDefaults
 import com.commit451.datepickerspinner.rememberDatePickerSpinnerState
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +50,7 @@ fun App(
 ) {
     val systemInDarkTheme = isSystemInDarkTheme()
     var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
+    val scope = rememberCoroutineScope()
 
     SystemAppearance(isDark = darkTheme)
 
@@ -70,8 +77,18 @@ fun App(
                     )
                 }
 
+                val scrollState = rememberScrollState()
                 Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .verticalScroll(scrollState)
+                        // Desktop scrolls this content with the mouse wheel only; this also lets
+                        // it be dragged with the mouse, like the spinners themselves.
+                        .draggable(
+                            state = rememberDraggableState { delta ->
+                                scope.launch { scrollState.scrollBy(-delta) }
+                            },
+                            orientation = Orientation.Vertical,
+                        ),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
