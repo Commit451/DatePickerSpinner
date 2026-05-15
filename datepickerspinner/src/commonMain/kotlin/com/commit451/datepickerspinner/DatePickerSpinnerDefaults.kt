@@ -69,7 +69,7 @@ object DatePickerSpinnerDefaults {
     fun colors(
         selectedTextColor: Color = MaterialTheme.colorScheme.onSurface,
         unselectedTextColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        dividerColor: Color = MaterialTheme.colorScheme.outline,
+        dividerColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     ): DatePickerSpinnerColors = DatePickerSpinnerColors(
         selectedTextColor = selectedTextColor,
         unselectedTextColor = unselectedTextColor,

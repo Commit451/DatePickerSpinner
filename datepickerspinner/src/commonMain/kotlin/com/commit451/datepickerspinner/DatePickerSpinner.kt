@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
@@ -46,6 +47,9 @@ private const val EdgeItemCount = VisibleItemCount / 2
 
 /** Height of a single wheel row. */
 private val ItemHeight = 48.dp
+
+/** Width of a single wheel column, matching the compact sizing of the native spinner. */
+private val WheelWidth = 70.dp
 
 private val MonthNames = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -86,8 +90,8 @@ fun DatePickerSpinner(
     }
 
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         WheelSpinner(
             count = MonthNames.size,
@@ -100,7 +104,7 @@ fun DatePickerSpinner(
             label = { MonthNames[it] },
             textStyle = textStyle,
             colors = colors,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.width(WheelWidth),
         )
         WheelSpinner(
             count = daysThisMonth,
@@ -109,7 +113,7 @@ fun DatePickerSpinner(
             label = { (it + 1).toString() },
             textStyle = textStyle,
             colors = colors,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.width(WheelWidth),
         )
         WheelSpinner(
             count = yearRange.last - yearRange.first + 1,
@@ -122,7 +126,7 @@ fun DatePickerSpinner(
             label = { (yearRange.first + it).toString() },
             textStyle = textStyle,
             colors = colors,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.width(WheelWidth),
         )
     }
 }
@@ -188,7 +192,7 @@ private fun WheelSpinner(
     val lineColor = colors.dividerColor
     val density = LocalDensity.current
     val itemHeightPx = with(density) { ItemHeight.toPx() }
-    val strokePx = with(density) { 1.dp.toPx() }
+    val strokePx = with(density) { 1.5.dp.toPx() }
     val insetPx = with(density) { 8.dp.toPx() }
 
     LazyColumn(
