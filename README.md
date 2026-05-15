@@ -3,6 +3,10 @@ The missing DatePickerSpinner from Material Design
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.commit451/datepickerspinner)](https://central.sonatype.com/artifact/com.commit451/datepickerspinner)
 
+| Light | Dark |
+|:-----:|:----:|
+| ![Light](images/light.png) | ![Dark](images/dark.png) |
+
 ## Supported Platforms
 - Android
 - JVM (Desktop)

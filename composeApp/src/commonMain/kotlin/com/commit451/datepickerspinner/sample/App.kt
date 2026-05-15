@@ -116,32 +116,10 @@ fun App(
                     )
 
                     Text(
-                        text = "Android DatePicker (spinner)",
+                        text = "Android android.widget.DatePicker (spinner)",
                         style = MaterialTheme.typography.titleMedium,
                     )
                     nativeDatePicker(darkTheme)
-
-                    Text(
-                        text = "Material 3 DatePicker (calendar)",
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    DatePicker(
-                        state = rememberDatePickerState(
-                            initialDisplayMode = DisplayMode.Picker,
-                        ),
-                        showModeToggle = false,
-                    )
-
-                    Text(
-                        text = "Material 3 DatePicker (text input)",
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    DatePicker(
-                        state = rememberDatePickerState(
-                            initialDisplayMode = DisplayMode.Input,
-                        ),
-                        showModeToggle = false,
-                    )
                 }
             }
         }
