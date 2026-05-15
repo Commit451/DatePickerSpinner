@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,10 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -64,6 +62,8 @@ private val MonthNames = listOf(
  * @param modifier the [Modifier] applied to the picker.
  * @param initialDate the date shown when the picker first appears. Defaults to today.
  * @param yearRange the inclusive range of selectable years.
+ * @param textStyle the text style applied to every wheel value.
+ * @param colors the [DatePickerSpinnerColors] used to render the picker.
  * @param onDateChange called whenever the selected date changes.
  */
 @Composable
@@ -71,6 +71,8 @@ fun DatePickerSpinner(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     yearRange: IntRange = 1900..2100,
+    textStyle: TextStyle = DatePickerSpinnerDefaults.textStyle,
+    colors: DatePickerSpinnerColors = DatePickerSpinnerDefaults.colors(),
     onDateChange: (LocalDate) -> Unit = {},
 ) {
     var year by remember { mutableStateOf(initialDate.year.coerceIn(yearRange)) }
@@ -96,6 +98,8 @@ fun DatePickerSpinner(
                 day = day.coerceAtMost(daysInMonth(year, month))
             },
             label = { MonthNames[it] },
+            textStyle = textStyle,
+            colors = colors,
             modifier = Modifier.weight(1f),
         )
         WheelSpinner(
@@ -103,6 +107,8 @@ fun DatePickerSpinner(
             selectedIndex = (day - 1).coerceIn(0, daysThisMonth - 1),
             onSelectedIndexChange = { index -> day = index + 1 },
             label = { (it + 1).toString() },
+            textStyle = textStyle,
+            colors = colors,
             modifier = Modifier.weight(1f),
         )
         WheelSpinner(
@@ -114,6 +120,8 @@ fun DatePickerSpinner(
                 day = day.coerceAtMost(daysInMonth(year, month))
             },
             label = { (yearRange.first + it).toString() },
+            textStyle = textStyle,
+            colors = colors,
             modifier = Modifier.weight(1f),
         )
     }
@@ -125,6 +133,8 @@ fun DatePickerSpinner(
  * @param selectedIndex the value index to center; also used to react to external changes.
  * @param onSelectedIndexChange called when scrolling settles on a new value.
  * @param label maps a value index to its display text.
+ * @param textStyle the text style applied to every value.
+ * @param colors the colors used to render values and the divider lines.
  */
 @Composable
 private fun WheelSpinner(
@@ -132,6 +142,8 @@ private fun WheelSpinner(
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
     label: (index: Int) -> String,
+    textStyle: TextStyle,
+    colors: DatePickerSpinnerColors,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
@@ -173,7 +185,7 @@ private fun WheelSpinner(
         }
     }
 
-    val lineColor = MaterialTheme.colorScheme.outline
+    val lineColor = colors.dividerColor
     val density = LocalDensity.current
     val itemHeightPx = with(density) { ItemHeight.toPx() }
     val strokePx = with(density) { 1.dp.toPx() }
@@ -218,16 +230,16 @@ private fun WheelSpinner(
                     },
                 contentAlignment = Alignment.Center,
             ) {
+                // The selected row is shown at full contrast while its neighbours are dimmed.
                 Text(
                     text = label(index),
                     textAlign = TextAlign.Center,
                     maxLines = 1,
-                    fontSize = if (isSelected) 20.sp else 18.sp,
-                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                    style = textStyle,
                     color = if (isSelected) {
-                        MaterialTheme.colorScheme.onSurface
+                        colors.selectedTextColor
                     } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                        colors.unselectedTextColor
                     },
                 )
             }
