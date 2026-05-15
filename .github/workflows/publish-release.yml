@@ -1,0 +1,67 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  RELEASE_SIGNING_ENABLED: true
+
+jobs:
+  publish-jvm:
+    runs-on: ubuntu-latest
+    if: github.repository == 'Commit451/DatePickerSpinner'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+          cache: gradle
+
+      - name: Publish Android & JVM
+        run: >
+          ./gradlew
+          publishAndroidPublicationToMavenCentralRepository
+          publishJvmPublicationToMavenCentralRepository
+          publishKotlinMultiplatformPublicationToMavenCentralRepository
+          -PVERSION_NAME="${GITHUB_REF_NAME}"
+          --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+
+  publish-ios:
+    runs-on: macos-latest
+    if: github.repository == 'Commit451/DatePickerSpinner'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+          cache: gradle
+
+      - name: Publish iOS
+        run: >
+          ./gradlew
+          publishIosArm64PublicationToMavenCentralRepository
+          publishIosSimulatorArm64PublicationToMavenCentralRepository
+          -PVERSION_NAME="${GITHUB_REF_NAME}"
+          --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
