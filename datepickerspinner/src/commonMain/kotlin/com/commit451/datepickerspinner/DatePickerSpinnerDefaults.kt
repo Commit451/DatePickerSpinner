@@ -35,8 +35,8 @@ class DatePickerSpinnerColors(
         if (this === other) return true
         if (other !is DatePickerSpinnerColors) return false
         return selectedTextColor == other.selectedTextColor &&
-            unselectedTextColor == other.unselectedTextColor &&
-            dividerColor == other.dividerColor
+                unselectedTextColor == other.unselectedTextColor &&
+                dividerColor == other.dividerColor
     }
 
     override fun hashCode(): Int {
@@ -48,9 +48,9 @@ class DatePickerSpinnerColors(
 
     override fun toString(): String =
         "DatePickerSpinnerColors(" +
-            "selectedTextColor=$selectedTextColor, " +
-            "unselectedTextColor=$unselectedTextColor, " +
-            "dividerColor=$dividerColor)"
+                "selectedTextColor=$selectedTextColor, " +
+                "unselectedTextColor=$unselectedTextColor, " +
+                "dividerColor=$dividerColor)"
 }
 
 /** Default values used by [DatePickerSpinner], all derived from the ambient [MaterialTheme]. */

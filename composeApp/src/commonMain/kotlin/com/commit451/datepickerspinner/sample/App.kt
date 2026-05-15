@@ -25,8 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.commit451.datepickerspinner.DatePickerSpinner
+import com.commit451.datepickerspinner.DatePickerSpinnerDefaults
+import kotlinx.datetime.LocalDate
 
 @Composable
 fun App(
@@ -77,6 +80,22 @@ fun App(
                         style = MaterialTheme.typography.titleMedium,
                     )
                     DatePickerSpinner()
+
+                    Text(
+                        text = "DatePickerSpinner (customized)",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    DatePickerSpinner(
+                        modifier = Modifier.fillMaxWidth(),
+                        initialDate = LocalDate(2030, 1, 1),
+                        yearRange = 2020..2040,
+                        textStyle = MaterialTheme.typography.titleLarge,
+                        colors = DatePickerSpinnerDefaults.colors(
+                            selectedTextColor = Color(0xFF6200EE),
+                            unselectedTextColor = Color(0xFFBB99EE),
+                            dividerColor = Color(0xFFE91E63),
+                        ),
+                    )
 
                     Text(
                         text = "Android DatePicker (spinner)",
