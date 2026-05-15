@@ -37,6 +37,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.composeUi)
             implementation(libs.composeFoundation)
+            implementation(compose.material3)
         }
     }
 }
