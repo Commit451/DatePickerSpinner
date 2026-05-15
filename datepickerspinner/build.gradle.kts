@@ -22,6 +22,8 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+
+        withHostTest {}
     }
 
     jvm {
@@ -40,6 +42,10 @@ kotlin {
             implementation(compose.material3)
             // api: LocalDate appears in DatePickerSpinner's public signature.
             api(libs.kotlinxDatetime)
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
     }
 }

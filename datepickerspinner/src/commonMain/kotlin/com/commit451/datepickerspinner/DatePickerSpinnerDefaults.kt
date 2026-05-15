@@ -4,7 +4,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 
 /**
  * Colors used to render a [DatePickerSpinner].
@@ -53,12 +52,32 @@ class DatePickerSpinnerColors(
                 "dividerColor=$dividerColor)"
 }
 
-/** Default values used by [DatePickerSpinner], all derived from the ambient [MaterialTheme]. */
+/** Default values used by [DatePickerSpinner]. */
 object DatePickerSpinnerDefaults {
 
-    /** The default text style applied to every wheel value. */
-    val textStyle: TextStyle
-        @Composable get() = MaterialTheme.typography.bodyLarge
+    /** The default inclusive range of selectable years. */
+    val YearRange: IntRange = 1900..2100
+
+    /** The default left-to-right order of the wheels (US-style month, day, year). */
+    val FieldOrder: List<DateField> = listOf(DateField.Month, DateField.Day, DateField.Year)
+
+    /** The default English abbreviated month names, January-first. Override to localize. */
+    val MonthNames: List<String> = listOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    )
+
+    /**
+     * Creates the default [DatePickerSpinnerFormatter].
+     *
+     * @param monthNames the twelve month labels, January-first. Override to localize.
+     * @param fieldOrder the left-to-right order of the wheels. Override to match a locale's
+     * date order.
+     */
+    fun dateFormatter(
+        monthNames: List<String> = MonthNames,
+        fieldOrder: List<DateField> = FieldOrder,
+    ): DatePickerSpinnerFormatter = DefaultDatePickerSpinnerFormatter(monthNames, fieldOrder)
 
     /**
      * Creates the default [DatePickerSpinnerColors], resolved from the current [MaterialTheme].

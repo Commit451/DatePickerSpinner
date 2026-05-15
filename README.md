@@ -36,8 +36,59 @@ dependencies {
 
 ## Basic Usage
 ```kotlin
-todo
+val state = rememberDatePickerSpinnerState()
+
+DatePickerSpinner(
+    state = state,
+    modifier = Modifier.fillMaxWidth(),
+)
+
+// The selection is observable from composition at any time:
+val selected: LocalDate = state.selectedDate
 ```
+
+By default the picker opens on today's date with a `1900..2100` year range. Pass `initialDate`
+and `yearRange` to `rememberDatePickerSpinnerState` to change that. With no width modifier the
+picker is compact; give it `Modifier.fillMaxWidth()` (or any fixed width) and the wheels stretch
+to share it.
+
+## Customization
+Colors are overridable per-instance via `colors`:
+```kotlin
+DatePickerSpinner(
+    state = rememberDatePickerSpinnerState(),
+    colors = DatePickerSpinnerDefaults.colors(
+        dividerColor = MaterialTheme.colorScheme.primary,
+    ),
+)
+```
+
+Text styling follows `MaterialTheme.typography.bodyLarge`, like Material 3's `DatePicker`. To
+restyle it, override that role in the theme — app-wide, or scoped around the picker:
+```kotlin
+MaterialTheme(
+    typography = MaterialTheme.typography.copy(
+        bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontSize = 20.sp),
+    ),
+) {
+    DatePickerSpinner(state = rememberDatePickerSpinnerState())
+}
+```
+
+## Localization
+The library bundles no strings. Localize it by supplying a `dateFormatter` with your own month
+labels and, if needed, a wheel order matching the locale's date order:
+```kotlin
+DatePickerSpinner(
+    state = rememberDatePickerSpinnerState(),
+    dateFormatter = DatePickerSpinnerDefaults.dateFormatter(
+        monthNames = localizedMonthNames, // any 12-element list, January-first
+        fieldOrder = listOf(DateField.Day, DateField.Month, DateField.Year),
+    ),
+)
+```
+For full control — localized numerals, era suffixes, day-of-week, etc. — implement
+`DatePickerSpinnerFormatter` directly.
 
 ## License
 DatePickerSpinner is available under the MIT license. See the LICENSE file for more info.

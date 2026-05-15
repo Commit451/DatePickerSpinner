@@ -7,59 +7,51 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import kotlin.math.abs
-import kotlin.time.Clock
+
+/** A selectable field of a [DatePickerSpinner]. */
+enum class DateField { Year, Month, Day }
 
 /** Number of rows visible in each wheel at once. Must be odd so one row sits at the center. */
 private const val VisibleItemCount = 3
 
-/** Rows of empty padding above/below the values so the first/last value can reach the center. */
-private const val EdgeItemCount = VisibleItemCount / 2
-
-/** Height of a single wheel row. */
-private val ItemHeight = 48.dp
-
-/** Width of a single wheel column, matching the compact sizing of the native spinner. */
+/** Width of a single wheel column when the picker is laid out at its compact size. */
 private val WheelWidth = 70.dp
 
-private val MonthNames = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-)
+/** Height added on top of the text height to give each row comfortable padding. */
+private val RowExtraHeight = 24.dp
 
 /**
- * A spinner-style date picker — three independently scrollable wheels for month, day and year,
- * mirroring the look of the legacy android.widget.DatePicker spinner mode.
+ * A spinner-style date picker — three independently scrollable, wrapping wheels for month, day
+ * and year, mirroring the look of the legacy [android.widget.DatePicker] spinner mode.
  *
  * Each wheel snaps to the nearest value; the centered value (framed by two divider lines) is the
  * current selection. Tapping a dimmed neighboring value scrolls it into the center.
@@ -67,35 +59,38 @@ private val MonthNames = listOf(
  * The picker is compact by default. When its width is constrained — for example with
  * `Modifier.fillMaxWidth()` — the three columns stretch to evenly share the available width.
  *
+ * @param state the [DatePickerSpinnerState] holding the current selection. Create one with
+ * [rememberDatePickerSpinnerState].
  * @param modifier the [Modifier] applied to the picker.
- * @param initialDate the date shown when the picker first appears. Defaults to today.
- * @param yearRange the inclusive range of selectable years.
- * @param textStyle the text style applied to every wheel value.
+ * @param dateFormatter formats the wheel values and controls the wheel order. Create one with
+ * [DatePickerSpinnerDefaults.dateFormatter], or implement [DatePickerSpinnerFormatter] directly.
  * @param colors the [DatePickerSpinnerColors] used to render the picker.
- * @param onDateChange called whenever the selected date changes.
  */
 @Composable
 fun DatePickerSpinner(
+    state: DatePickerSpinnerState,
     modifier: Modifier = Modifier,
-    initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-    yearRange: IntRange = 1900..2100,
-    textStyle: TextStyle = DatePickerSpinnerDefaults.textStyle,
+    dateFormatter: DatePickerSpinnerFormatter = remember { DatePickerSpinnerDefaults.dateFormatter() },
     colors: DatePickerSpinnerColors = DatePickerSpinnerDefaults.colors(),
-    onDateChange: (LocalDate) -> Unit = {},
 ) {
-    var year by remember { mutableStateOf(initialDate.year.coerceIn(yearRange)) }
-    var month by remember { mutableStateOf(initialDate.month.ordinal + 1) }
-    var day by remember { mutableStateOf(initialDate.day) }
+    // Text styling follows the theme, matching Material 3's DatePicker. Restyle by overriding
+    // the bodyLarge typography role in MaterialTheme.
+    val textStyle = MaterialTheme.typography.bodyLarge
 
-    val daysThisMonth = daysInMonth(year, month)
-
-    LaunchedEffect(year, month, day) {
-        onDateChange(LocalDate(year, month, day))
+    // Row height follows the text style, so larger styles are not clipped.
+    val density = LocalDensity.current
+    val itemHeight = remember(textStyle, density) {
+        val lineHeight = when {
+            textStyle.lineHeight.isSp -> textStyle.lineHeight
+            textStyle.fontSize.isSp -> textStyle.fontSize * 1.4f
+            else -> 24.sp
+        }
+        with(density) { lineHeight.toDp() } + RowExtraHeight
     }
 
-    // With no width constraint the columns stay at their compact, native-like fixed width.
-    // When the caller fixes the width (e.g. fillMaxWidth) they stretch to share it instead.
     BoxWithConstraints(modifier = modifier) {
+        // With no width constraint the columns keep their compact, native-like fixed width.
+        // When the caller fixes the width (e.g. fillMaxWidth) they stretch to share it instead.
         val stretchToWidth = constraints.hasFixedWidth
 
         Row(
@@ -105,53 +100,55 @@ fun DatePickerSpinner(
             val wheelModifier =
                 if (stretchToWidth) Modifier.weight(1f) else Modifier.width(WheelWidth)
 
-            WheelSpinner(
-                count = MonthNames.size,
-                selectedIndex = month - 1,
-                onSelectedIndexChange = { index ->
-                    month = index + 1
-                    // A shorter month may invalidate the current day.
-                    day = day.coerceAtMost(daysInMonth(year, month))
-                },
-                label = { MonthNames[it] },
-                textStyle = textStyle,
-                colors = colors,
-                modifier = wheelModifier,
-            )
-            WheelSpinner(
-                count = daysThisMonth,
-                selectedIndex = (day - 1).coerceIn(0, daysThisMonth - 1),
-                onSelectedIndexChange = { index -> day = index + 1 },
-                label = { (it + 1).toString() },
-                textStyle = textStyle,
-                colors = colors,
-                modifier = wheelModifier,
-            )
-            WheelSpinner(
-                count = yearRange.last - yearRange.first + 1,
-                selectedIndex = year - yearRange.first,
-                onSelectedIndexChange = { index ->
-                    year = yearRange.first + index
-                    // Leap years change the length of February.
-                    day = day.coerceAtMost(daysInMonth(year, month))
-                },
-                label = { (yearRange.first + it).toString() },
-                textStyle = textStyle,
-                colors = colors,
-                modifier = wheelModifier,
-            )
+            for (field in dateFormatter.fieldOrder) {
+                when (field) {
+                    DateField.Month -> WheelSpinner(
+                        count = 12,
+                        selectedIndex = state.selectedMonth - 1,
+                        onSelectedIndexChange = { state.selectMonth(it + 1) },
+                        label = { dateFormatter.formatMonth(it + 1) },
+                        textStyle = textStyle,
+                        colors = colors,
+                        itemHeight = itemHeight,
+                        modifier = wheelModifier,
+                    )
+
+                    DateField.Day -> WheelSpinner(
+                        count = daysInMonth(state.selectedYear, state.selectedMonth),
+                        selectedIndex = state.selectedDay - 1,
+                        onSelectedIndexChange = { state.selectDay(it + 1) },
+                        label = { dateFormatter.formatDay(it + 1) },
+                        textStyle = textStyle,
+                        colors = colors,
+                        itemHeight = itemHeight,
+                        modifier = wheelModifier,
+                    )
+
+                    DateField.Year -> WheelSpinner(
+                        count = state.yearRange.last - state.yearRange.first + 1,
+                        selectedIndex = state.selectedYear - state.yearRange.first,
+                        onSelectedIndexChange = { state.selectYear(state.yearRange.first + it) },
+                        label = { dateFormatter.formatYear(state.yearRange.first + it) },
+                        textStyle = textStyle,
+                        colors = colors,
+                        itemHeight = itemHeight,
+                        modifier = wheelModifier,
+                    )
+                }
+            }
         }
     }
 }
 
 /**
- * A single scrollable wheel of [count] values, snapping the nearest value to the center.
+ * A single scrollable, wrapping wheel of [count] values, snapping the nearest value to the center.
  *
  * @param selectedIndex the value index to center; also used to react to external changes.
  * @param onSelectedIndexChange called when scrolling settles on a new value.
  * @param label maps a value index to its display text.
  * @param textStyle the text style applied to every value.
  * @param colors the colors used to render values and the divider lines.
+ * @param itemHeight the height of a single row.
  */
 @Composable
 private fun WheelSpinner(
@@ -161,20 +158,26 @@ private fun WheelSpinner(
     label: (index: Int) -> String,
     textStyle: TextStyle,
     colors: DatePickerSpinnerColors,
+    itemHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
+    // The list is virtually infinite; the value at a list index is index % count, so the wheel
+    // wraps around like the native NumberPicker.
+    val initialListIndex = remember {
+        val anchor = Int.MAX_VALUE / 2
+        anchor - anchor.mod(count) + (selectedIndex - 1).mod(count)
+    }
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialListIndex)
     val flingBehavior = rememberSnapFlingBehavior(listState)
     val scope = rememberCoroutineScope()
 
-    // The list index whose center is nearest the viewport center. Padding rows mean the centered
-    // value index is this minus EdgeItemCount.
+    // List index nearest the viewport center. When snapped this is firstVisibleItemIndex + 1.
     val centeredListIndex by remember {
         derivedStateOf {
             val info = listState.layoutInfo
             val visible = info.visibleItemsInfo
             if (visible.isEmpty()) {
-                selectedIndex + EdgeItemCount
+                listState.firstVisibleItemIndex + 1
             } else {
                 val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2f
                 visible.minByOrNull { item ->
@@ -184,27 +187,28 @@ private fun WheelSpinner(
         }
     }
 
-    // Report a new selection once the wheel settles on it.
+    // Report the centered value once the wheel settles. selectMonth/Day/Year are idempotent, so
+    // reporting an unchanged value is harmless.
     LaunchedEffect(listState, count) {
         snapshotFlow { listState.isScrollInProgress }
             .drop(1)
             .filter { scrolling -> !scrolling }
-            .collect {
-                val value = (centeredListIndex - EdgeItemCount).coerceIn(0, count - 1)
-                if (value != selectedIndex) onSelectedIndexChange(value)
-            }
+            .collect { onSelectedIndexChange(centeredListIndex.mod(count)) }
     }
 
-    // Re-align the wheel when the selection changes from the outside (e.g. day clamping).
-    LaunchedEffect(selectedIndex) {
-        if (!listState.isScrollInProgress && listState.firstVisibleItemIndex != selectedIndex) {
-            listState.scrollToItem(selectedIndex)
+    // Re-align the wheel when the selection — or the number of values — changes from outside.
+    LaunchedEffect(selectedIndex, count) {
+        if (listState.isScrollInProgress) return@LaunchedEffect
+        val centered = centeredListIndex
+        val delta = selectedIndex - centered.mod(count)
+        if (delta != 0) {
+            listState.scrollToItem((centered + delta - 1).coerceAtLeast(0))
         }
     }
 
     val lineColor = colors.dividerColor
     val density = LocalDensity.current
-    val itemHeightPx = with(density) { ItemHeight.toPx() }
+    val itemHeightPx = with(density) { itemHeight.toPx() }
     val strokePx = with(density) { 1.5.dp.toPx() }
     val insetPx = with(density) { 8.dp.toPx() }
 
@@ -212,7 +216,7 @@ private fun WheelSpinner(
         state = listState,
         flingBehavior = flingBehavior,
         modifier = modifier
-            .height(ItemHeight * VisibleItemCount)
+            .height(itemHeight * VisibleItemCount)
             // Frame the center row with a divider line above and below it.
             .drawWithContent {
                 drawContent()
@@ -232,46 +236,33 @@ private fun WheelSpinner(
                 )
             },
     ) {
-        item { Spacer(Modifier.height(ItemHeight)) }
-        items(count, key = { it }) { index ->
-            val isSelected = index + EdgeItemCount == centeredListIndex
+        items(Int.MAX_VALUE, key = { it }) { listIndex ->
+            val isSelected = listIndex == centeredListIndex
             Box(
                 modifier = Modifier
-                    .height(ItemHeight)
+                    .height(itemHeight)
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
-                        scope.launch { listState.animateScrollToItem(index) }
-                    },
+                        scope.launch {
+                            listState.animateScrollToItem((listIndex - 1).coerceAtLeast(0))
+                        }
+                    }
+                    // Only the centered value is exposed to accessibility services; the dimmed
+                    // neighbours are cleared so a screen reader announces a single value.
+                    .then(if (isSelected) Modifier else Modifier.clearAndSetSemantics {}),
                 contentAlignment = Alignment.Center,
             ) {
-                // The selected row is shown at full contrast while its neighbours are dimmed.
                 Text(
-                    text = label(index),
+                    text = label(listIndex.mod(count)),
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     style = textStyle,
-                    color = if (isSelected) {
-                        colors.selectedTextColor
-                    } else {
-                        colors.unselectedTextColor
-                    },
+                    color = if (isSelected) colors.selectedTextColor else colors.unselectedTextColor,
                 )
             }
         }
-        item { Spacer(Modifier.height(ItemHeight)) }
     }
 }
-
-/** The number of days in the given 1-based [month] of [year], accounting for leap years. */
-private fun daysInMonth(year: Int, month: Int): Int = when (month) {
-    1, 3, 5, 7, 8, 10, 12 -> 31
-    4, 6, 9, 11 -> 30
-    2 -> if (isLeapYear(year)) 29 else 28
-    else -> 30
-}
-
-private fun isLeapYear(year: Int): Boolean =
-    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
