@@ -34,7 +34,11 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import kotlin.math.abs
+import kotlin.time.Clock
 
 /** Number of rows visible in each wheel at once. Must be odd so one row sits at the center. */
 private const val VisibleItemCount = 3
@@ -52,35 +56,31 @@ private val MonthNames = listOf(
 
 /**
  * A spinner-style date picker — three independently scrollable wheels for month, day and year,
- * mirroring the look of the legacy Android [android.widget.DatePicker] spinner mode.
+ * mirroring the look of the legacy android.widget.DatePicker spinner mode.
  *
  * Each wheel snaps to the nearest value; the centered value (framed by two divider lines) is the
- * current selection. Tapping a dimmed neighbouring value scrolls it into the center.
+ * current selection. Tapping a dimmed neighboring value scrolls it into the center.
  *
  * @param modifier the [Modifier] applied to the picker.
- * @param initialDate the date shown when the picker first appears. Defaults to [today].
+ * @param initialDate the date shown when the picker first appears. Defaults to today.
  * @param yearRange the inclusive range of selectable years.
  * @param onDateChange called whenever the selected date changes.
  */
 @Composable
 fun DatePickerSpinner(
     modifier: Modifier = Modifier,
-    initialDate: CalendarDate = today(),
+    initialDate: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     yearRange: IntRange = 1900..2100,
-    onDateChange: (CalendarDate) -> Unit = {},
+    onDateChange: (LocalDate) -> Unit = {},
 ) {
     var year by remember { mutableStateOf(initialDate.year.coerceIn(yearRange)) }
-    var month by remember { mutableStateOf(initialDate.month.coerceIn(1, 12)) }
-    var day by remember {
-        mutableStateOf(
-            initialDate.dayOfMonth.coerceIn(1, daysInMonth(initialDate.year, initialDate.month)),
-        )
-    }
+    var month by remember { mutableStateOf(initialDate.month.ordinal + 1) }
+    var day by remember { mutableStateOf(initialDate.day) }
 
     val daysThisMonth = daysInMonth(year, month)
 
     LaunchedEffect(year, month, day) {
-        onDateChange(CalendarDate(year, month, day))
+        onDateChange(LocalDate(year, month, day))
     }
 
     Row(
@@ -235,3 +235,14 @@ private fun WheelSpinner(
         item { Spacer(Modifier.height(ItemHeight)) }
     }
 }
+
+/** The number of days in the given 1-based [month] of [year], accounting for leap years. */
+private fun daysInMonth(year: Int, month: Int): Int = when (month) {
+    1, 3, 5, 7, 8, 10, 12 -> 31
+    4, 6, 9, 11 -> 30
+    2 -> if (isLeapYear(year)) 29 else 28
+    else -> 30
+}
+
+private fun isLeapYear(year: Int): Boolean =
+    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
