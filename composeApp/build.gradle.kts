@@ -44,6 +44,10 @@ kotlin {
             implementation(compose.material3)
         }
 
+        androidMain.dependencies {
+            implementation(libs.androidxCoreKtx)
+        }
+
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
         }
