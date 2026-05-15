@@ -40,7 +40,7 @@ import kotlinx.datetime.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
-    nativeDatePicker: @Composable () -> Unit = {},
+    nativeDatePicker: @Composable (isDark: Boolean) -> Unit = {},
 ) {
     val systemInDarkTheme = isSystemInDarkTheme()
     var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
@@ -119,7 +119,7 @@ fun App(
                         text = "Android DatePicker (spinner)",
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    nativeDatePicker()
+                    nativeDatePicker(darkTheme)
 
                     Text(
                         text = "Material 3 DatePicker (calendar)",
