@@ -28,13 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.commit451.datepickerspinner.DatePickerSpinner
 
-/**
- * The sample app.
- *
- * @param nativeDatePicker optional slot for a platform-native date picker, shown below our
- * [DatePickerSpinner] so the two can be compared side by side. The Android sample passes the
- * View-based [android.widget.DatePicker] in its spinner mode here.
- */
 @Composable
 fun App(
     nativeDatePicker: @Composable () -> Unit = {},
@@ -42,7 +35,6 @@ fun App(
     val systemInDarkTheme = isSystemInDarkTheme()
     var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
 
-    // Keep the system bar icon contrast in sync with the chosen theme.
     SystemAppearance(isDark = darkTheme)
 
     MaterialTheme(
@@ -52,7 +44,6 @@ fun App(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    // Inset content within the status/navigation bars so nothing draws under them.
                     .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -74,7 +65,15 @@ fun App(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = "DatePickerSpinner (ours)",
+                        text = "DatePickerSpinner (fillMaxWidth)",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    DatePickerSpinner(
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Text(
+                        text = "DatePickerSpinner (compact)",
                         style = MaterialTheme.typography.titleMedium,
                     )
                     DatePickerSpinner()

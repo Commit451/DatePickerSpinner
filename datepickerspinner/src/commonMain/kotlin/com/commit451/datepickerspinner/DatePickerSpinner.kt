@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,6 +64,9 @@ private val MonthNames = listOf(
  * Each wheel snaps to the nearest value; the centered value (framed by two divider lines) is the
  * current selection. Tapping a dimmed neighboring value scrolls it into the center.
  *
+ * The picker is compact by default. When its width is constrained — for example with
+ * `Modifier.fillMaxWidth()` — the three columns stretch to evenly share the available width.
+ *
  * @param modifier the [Modifier] applied to the picker.
  * @param initialDate the date shown when the picker first appears. Defaults to today.
  * @param yearRange the inclusive range of selectable years.
@@ -89,45 +93,54 @@ fun DatePickerSpinner(
         onDateChange(LocalDate(year, month, day))
     }
 
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        WheelSpinner(
-            count = MonthNames.size,
-            selectedIndex = month - 1,
-            onSelectedIndexChange = { index ->
-                month = index + 1
-                // A shorter month may invalidate the current day.
-                day = day.coerceAtMost(daysInMonth(year, month))
-            },
-            label = { MonthNames[it] },
-            textStyle = textStyle,
-            colors = colors,
-            modifier = Modifier.width(WheelWidth),
-        )
-        WheelSpinner(
-            count = daysThisMonth,
-            selectedIndex = (day - 1).coerceIn(0, daysThisMonth - 1),
-            onSelectedIndexChange = { index -> day = index + 1 },
-            label = { (it + 1).toString() },
-            textStyle = textStyle,
-            colors = colors,
-            modifier = Modifier.width(WheelWidth),
-        )
-        WheelSpinner(
-            count = yearRange.last - yearRange.first + 1,
-            selectedIndex = year - yearRange.first,
-            onSelectedIndexChange = { index ->
-                year = yearRange.first + index
-                // Leap years change the length of February.
-                day = day.coerceAtMost(daysInMonth(year, month))
-            },
-            label = { (yearRange.first + it).toString() },
-            textStyle = textStyle,
-            colors = colors,
-            modifier = Modifier.width(WheelWidth),
-        )
+    // With no width constraint the columns stay at their compact, native-like fixed width.
+    // When the caller fixes the width (e.g. fillMaxWidth) they stretch to share it instead.
+    BoxWithConstraints(modifier = modifier) {
+        val stretchToWidth = constraints.hasFixedWidth
+
+        Row(
+            modifier = if (stretchToWidth) Modifier.fillMaxWidth() else Modifier,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            val wheelModifier =
+                if (stretchToWidth) Modifier.weight(1f) else Modifier.width(WheelWidth)
+
+            WheelSpinner(
+                count = MonthNames.size,
+                selectedIndex = month - 1,
+                onSelectedIndexChange = { index ->
+                    month = index + 1
+                    // A shorter month may invalidate the current day.
+                    day = day.coerceAtMost(daysInMonth(year, month))
+                },
+                label = { MonthNames[it] },
+                textStyle = textStyle,
+                colors = colors,
+                modifier = wheelModifier,
+            )
+            WheelSpinner(
+                count = daysThisMonth,
+                selectedIndex = (day - 1).coerceIn(0, daysThisMonth - 1),
+                onSelectedIndexChange = { index -> day = index + 1 },
+                label = { (it + 1).toString() },
+                textStyle = textStyle,
+                colors = colors,
+                modifier = wheelModifier,
+            )
+            WheelSpinner(
+                count = yearRange.last - yearRange.first + 1,
+                selectedIndex = year - yearRange.first,
+                onSelectedIndexChange = { index ->
+                    year = yearRange.first + index
+                    // Leap years change the length of February.
+                    day = day.coerceAtMost(daysInMonth(year, month))
+                },
+                label = { (yearRange.first + it).toString() },
+                textStyle = textStyle,
+                colors = colors,
+                modifier = wheelModifier,
+            )
+        }
     }
 }
 
