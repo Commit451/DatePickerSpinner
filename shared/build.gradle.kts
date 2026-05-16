@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -30,7 +29,7 @@ kotlin {
         iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
+            baseName = "Shared"
             isStatic = true
         }
     }
@@ -46,22 +45,6 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidxCoreKtx)
-        }
-
-        jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-        }
-    }
-}
-
-compose.desktop {
-    application {
-        mainClass = "com.commit451.datepickerspinner.sample.MainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "DatePickerSpinner Sample"
-            packageVersion = "1.0.0"
         }
     }
 }

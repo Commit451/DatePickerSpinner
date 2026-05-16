@@ -1,13 +1,15 @@
 # DatePickerSpinner
+
 The missing DatePickerSpinner from Material Design
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.commit451/datepickerspinner)](https://central.sonatype.com/artifact/com.commit451/datepickerspinner)
 
-| Light | Dark |
-|:-----:|:----:|
+|           Light            |           Dark           |
+|:--------------------------:|:------------------------:|
 | ![Light](images/light.png) | ![Dark](images/dark.png) |
 
 ## Supported Platforms
+
 - Android
 - JVM (Desktop)
 - iOS (arm64, simulator arm64)
@@ -15,7 +17,9 @@ The missing DatePickerSpinner from Material Design
 ## Gradle
 
 ### Multiplatform
+
 For Compose Multiplatform projects, add the dependency in your `commonMain` source set:
+
 ```kotlin
 commonMain.dependencies {
     implementation("com.commit451:datepickerspinner:latest.release.here")
@@ -23,7 +27,9 @@ commonMain.dependencies {
 ```
 
 ### Android
+
 For Android-only projects:
+
 ```kotlin
 dependencies {
     implementation("com.commit451:datepickerspinner-android:latest.release.here")
@@ -31,7 +37,9 @@ dependencies {
 ```
 
 ### JVM (Desktop)
+
 For JVM-only projects:
+
 ```kotlin
 dependencies {
     implementation("com.commit451:datepickerspinner-jvm:latest.release.here")
@@ -39,6 +47,7 @@ dependencies {
 ```
 
 ## Basic Usage
+
 ```kotlin
 val state = rememberDatePickerSpinnerState()
 
@@ -57,7 +66,9 @@ picker is compact; give it `Modifier.fillMaxWidth()` (or any fixed width) and th
 to share it.
 
 ## Customization
+
 Colors are overridable per-instance via `colors`:
+
 ```kotlin
 DatePickerSpinner(
     state = rememberDatePickerSpinnerState(),
@@ -69,6 +80,7 @@ DatePickerSpinner(
 
 Text styling follows `MaterialTheme.typography.bodyLarge`, like Material 3's `DatePicker`. To
 restyle it, override that role in the theme — app-wide, or scoped around the picker:
+
 ```kotlin
 MaterialTheme(
     typography = MaterialTheme.typography.copy(
@@ -80,8 +92,10 @@ MaterialTheme(
 ```
 
 ## Localization
+
 The library bundles no strings. Localize it by supplying a `dateFormatter` with your own month
 labels and, if needed, a wheel order matching the locale's date order:
+
 ```kotlin
 DatePickerSpinner(
     state = rememberDatePickerSpinnerState(),
@@ -91,10 +105,12 @@ DatePickerSpinner(
     ),
 )
 ```
+
 For full control — localized numerals, era suffixes, day-of-week, etc. — implement
 `DatePickerSpinnerFormatter` directly.
 
 ## License
+
 DatePickerSpinner is available under the MIT license. See the LICENSE file for more info.
 
 \ ゜o゜)ノ

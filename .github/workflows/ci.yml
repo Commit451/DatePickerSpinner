@@ -18,4 +18,4 @@ jobs:
           cache: gradle
 
       - name: Build & test Android & JVM
-        run: ./gradlew :datepickerspinner:check :composeApp:compileAndroidMain :composeApp:compileKotlinJvm :androidApp:compileDebugKotlin
+        run: ./gradlew :datepickerspinner:check :shared:compileAndroidMain :shared:compileKotlinJvm :androidApp:compileDebugKotlin :desktopApp:compileKotlin

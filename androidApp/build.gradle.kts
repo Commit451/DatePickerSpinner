@@ -34,7 +34,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":composeApp"))
+    implementation(project(":shared"))
 
     implementation(platform(libs.composeBom))
     implementation(libs.androidxActivityCompose)
