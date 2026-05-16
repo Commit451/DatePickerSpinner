@@ -39,7 +39,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.composeUi)
             implementation(libs.composeFoundation)
-            implementation(compose.material3)
+            implementation(libs.composeMaterial3)
             // api: LocalDate appears in DatePickerSpinner's public signature.
             api(libs.kotlinxDatetime)
         }
