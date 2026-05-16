@@ -13,6 +13,7 @@ The missing DatePickerSpinner from Material Design
 - Android
 - JVM (Desktop)
 - iOS (arm64, simulator arm64)
+- Web (Wasm, JS)
 
 ## Gradle
 
