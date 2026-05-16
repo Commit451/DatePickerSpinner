@@ -47,6 +47,12 @@ dependencies {
 }
 ```
 
+### Web/iOS
+
+Web (Wasm and JS) and iOS have no standalone artifacts — both come through a Compose
+Multiplatform module. Use the `commonMain` dependency from the Multiplatform section above;
+Gradle resolves the correct variant for each target your project declares.
+
 ## Basic Usage
 
 ```kotlin
