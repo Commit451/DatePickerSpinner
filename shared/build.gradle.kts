@@ -11,7 +11,7 @@ plugins {
 kotlin {
     androidLibrary {
         namespace = "com.commit451.datepickerspinner.sample.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 24
 
         compilerOptions {
