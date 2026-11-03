@@ -40,11 +40,17 @@ kotlin {
 
     js {
         browser()
+        // Compose UI's Skiko runtime is only loaded when the JS tests run through a
+        // webpack bundle, which requires an executable binary (CMP-4906).
+        binaries.executable()
     }
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        // Same requirement as js: the Skiko runtime only loads from a
+        // webpack-bundled executable binary (CMP-4906).
+        binaries.executable()
     }
 
     sourceSets {
