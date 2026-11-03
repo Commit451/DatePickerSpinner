@@ -72,6 +72,29 @@ and `yearRange` to `rememberDatePickerSpinnerState` to change that. With no widt
 picker is compact; give it `Modifier.fillMaxWidth()` (or any fixed width) and the wheels stretch
 to share it.
 
+## Confirming a selection
+
+Wheel selections are committed to `state.selectedDate` after scrolling settles. While a wheel is
+being dragged, animating, or waiting to commit, `state.isSelectionInProgress` is `true`. Use this
+observable property to disable confirmation, and check it in the click handler too: the button
+may not have recomposed yet when a wheel tap is immediately followed by confirmation.
+
+```kotlin
+Button(
+    enabled = !state.isSelectionInProgress,
+    onClick = {
+        if (!state.isSelectionInProgress) {
+            onDateConfirmed(state.selectedDate)
+        }
+    },
+) {
+    Text("Save")
+}
+```
+
+The flag covers all wheels, including overlapping interactions. It clears after the selection
+is committed or the picker leaves composition, and is not persisted by the state saver.
+
 ## Customization
 
 Colors are overridable per-instance via `colors`:

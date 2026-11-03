@@ -2,8 +2,10 @@ package com.commit451.datepickerspinner
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,6 +36,7 @@ fun rememberDatePickerSpinnerState(
  *
  * Holds the current selection and keeps it valid — for example clamping the day when a change of
  * month or year shortens the month. Read or assign [selectedDate] to observe or drive the picker.
+ * Check [isSelectionInProgress] before confirming a wheel selection.
  */
 @Stable
 class DatePickerSpinnerState(
@@ -46,7 +49,12 @@ class DatePickerSpinnerState(
         initialDate.day.coerceAtMost(daysInMonth(year, month)),
     )
 
-    /** The currently selected date. Assigning a value moves the picker to that date. */
+    private val wheelSelections = mutableStateListOf<State<Boolean>>()
+
+    /**
+     * The most recently committed date. Wheel interactions commit after scrolling settles; check
+     * [isSelectionInProgress] before confirming the value. Assigning a value moves the picker to it.
+     */
     var selectedDate: LocalDate
         get() = LocalDate(year, month, day)
         set(value) {
@@ -54,6 +62,24 @@ class DatePickerSpinnerState(
             month = value.month.ordinal + 1
             day = value.day.coerceAtMost(daysInMonth(year, month))
         }
+
+    /**
+     * Whether any attached wheel is dragging, scrolling, or waiting to commit its selection.
+     *
+     * Use this to disable confirmation actions, and check it again inside their click handlers so
+     * a tap immediately followed by confirmation cannot submit the previous [selectedDate].
+     * This transient status is not saved and is false when no picker is attached.
+     */
+    val isSelectionInProgress: Boolean
+        get() = wheelSelections.any { it.value }
+
+    internal fun registerWheel(selectionInProgress: State<Boolean>) {
+        wheelSelections.add(selectionInProgress)
+    }
+
+    internal fun unregisterWheel(selectionInProgress: State<Boolean>) {
+        wheelSelections.remove(selectionInProgress)
+    }
 
     internal val selectedYear: Int get() = year
     internal val selectedMonth: Int get() = month

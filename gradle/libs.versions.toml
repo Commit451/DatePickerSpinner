@@ -15,6 +15,7 @@ androidxCoreKtx = { module = "androidx.core:core-ktx", version.ref = "androidxCo
 androidxActivityCompose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidxComposeUi = { module = "androidx.compose.ui:ui" }
 composeUi = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
+composeUiTest = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
 composeFoundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 composeMaterial3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }

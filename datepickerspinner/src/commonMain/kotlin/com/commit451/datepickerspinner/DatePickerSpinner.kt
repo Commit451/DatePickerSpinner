@@ -19,11 +19,16 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -57,8 +63,9 @@ private val RowExtraHeight = 24.dp
  * A spinner-style date picker — three independently scrollable, wrapping wheels for month, day
  * and year, mirroring the look of the legacy [android.widget.DatePicker] spinner mode.
  *
- * Each wheel snaps to the nearest value; the centered value (framed by two divider lines) is the
- * current selection. Tapping a dimmed neighboring value scrolls it into the center.
+ * Each wheel snaps to the nearest value and commits it to [DatePickerSpinnerState.selectedDate]
+ * once scrolling settles. Tapping a dimmed neighboring value scrolls it into the center. Check
+ * [DatePickerSpinnerState.isSelectionInProgress] before confirming the selection.
  *
  * The picker is compact by default. When its width is constrained — for example with
  * `Modifier.fillMaxWidth()` — the three columns stretch to evenly share the available width.
@@ -107,6 +114,7 @@ fun DatePickerSpinner(
             for (field in dateFormatter.fieldOrder) {
                 when (field) {
                     DateField.Month -> WheelSpinner(
+                        state = state,
                         count = 12,
                         selectedIndex = state.selectedMonth - 1,
                         onSelectedIndexChange = { state.selectMonth(it + 1) },
@@ -118,6 +126,7 @@ fun DatePickerSpinner(
                     )
 
                     DateField.Day -> WheelSpinner(
+                        state = state,
                         count = daysInMonth(state.selectedYear, state.selectedMonth),
                         selectedIndex = state.selectedDay - 1,
                         onSelectedIndexChange = { state.selectDay(it + 1) },
@@ -129,6 +138,7 @@ fun DatePickerSpinner(
                     )
 
                     DateField.Year -> WheelSpinner(
+                        state = state,
                         count = state.yearRange.last - state.yearRange.first + 1,
                         selectedIndex = state.selectedYear - state.yearRange.first,
                         onSelectedIndexChange = { state.selectYear(state.yearRange.first + it) },
@@ -147,6 +157,7 @@ fun DatePickerSpinner(
 /**
  * A single scrollable, wrapping wheel of [count] values, snapping the nearest value to the center.
  *
+ * @param state aggregates pending selections across the picker's wheels.
  * @param selectedIndex the value index to center; also used to react to external changes.
  * @param onSelectedIndexChange called when scrolling settles on a new value.
  * @param label maps a value index to its display text.
@@ -156,6 +167,7 @@ fun DatePickerSpinner(
  */
 @Composable
 private fun WheelSpinner(
+    state: DatePickerSpinnerState,
     count: Int,
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
@@ -174,13 +186,18 @@ private fun WheelSpinner(
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialListIndex)
     val flingBehavior = rememberSnapFlingBehavior(listState)
     val scope = rememberCoroutineScope()
+    var pendingAnimations by remember { mutableIntStateOf(0) }
+    var isDragging by remember { mutableStateOf(false) }
+    val currentCount by rememberUpdatedState(count)
+    val currentSelectedIndex by rememberUpdatedState(selectedIndex)
+    val currentOnSelectedIndexChange by rememberUpdatedState(onSelectedIndexChange)
 
     // On desktop a LazyColumn scrolls only with the mouse wheel; a mouse press-drag does nothing.
     // This translates a vertical drag into a scroll so the wheel can be flicked with the mouse,
     // matching touch behaviour. On touch the list's own scrolling claims the drag first, so this
     // stays dormant there and does not double up.
     val dragState = rememberDraggableState { delta ->
-        scope.launch { listState.scrollBy(-delta) }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { listState.scrollBy(-delta) }
     }
 
     // List index nearest the viewport center. When snapped this is firstVisibleItemIndex + 1.
@@ -199,13 +216,25 @@ private fun WheelSpinner(
         }
     }
 
+    // Scrolling may stop before the settlement collector commits the centered value.
+    val selectionInProgress = remember(listState) {
+        derivedStateOf {
+            pendingAnimations > 0 || isDragging || listState.isScrollInProgress ||
+                centeredListIndex.mod(currentCount) != currentSelectedIndex
+        }
+    }
+    DisposableEffect(state, selectionInProgress) {
+        state.registerWheel(selectionInProgress)
+        onDispose { state.unregisterWheel(selectionInProgress) }
+    }
+
     // Report the centered value once the wheel settles. selectMonth/Day/Year are idempotent, so
     // reporting an unchanged value is harmless.
     LaunchedEffect(listState, count) {
         snapshotFlow { listState.isScrollInProgress }
             .drop(1)
             .filter { scrolling -> !scrolling }
-            .collect { onSelectedIndexChange(centeredListIndex.mod(count)) }
+            .collect { currentOnSelectedIndexChange(centeredListIndex.mod(count)) }
     }
 
     // Re-align the wheel when the selection — or the number of values — changes from outside.
@@ -232,10 +261,15 @@ private fun WheelSpinner(
             .draggable(
                 state = dragState,
                 orientation = Orientation.Vertical,
+                onDragStarted = { isDragging = true },
                 // Hand the release velocity to the snap fling so the wheel settles on a value.
                 onDragStopped = { velocity ->
-                    listState.scroll {
-                        with(flingBehavior) { performFling(-velocity) }
+                    try {
+                        listState.scroll {
+                            with(flingBehavior) { performFling(-velocity) }
+                        }
+                    } finally {
+                        isDragging = false
                     }
                 },
             )
@@ -268,8 +302,13 @@ private fun WheelSpinner(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
-                        scope.launch {
-                            listState.animateScrollToItem((listIndex - 1).coerceAtLeast(0))
+                        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                            pendingAnimations++
+                            try {
+                                listState.animateScrollToItem((listIndex - 1).coerceAtLeast(0))
+                            } finally {
+                                pendingAnimations--
+                            }
                         }
                     }
                     // Only the centered value is exposed to accessibility services; the dimmed
